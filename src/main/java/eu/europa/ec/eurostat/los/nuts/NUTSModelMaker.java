@@ -4,7 +4,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -85,7 +84,7 @@ public class NUTSModelMaker {
 		SortedMap<String, String> ramonCodes = new TreeMap<String, String>(); // Example: 9 -> BE213
 		// Store the mappings between numeric and string code so as to be able to construct hierarchy
 		SortedMap<String, String> hierarchyMappings = new TreeMap<String, String>(); // Example: BE213 -> 6
-		Reader in = new FileReader(Configuration.RAMON_NUTS_FILE_NAME);
+		Reader in = new FileReader(Configuration.RAMON_NUTS_2013_FILE_NAME);
 		Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
 		for (CSVRecord record : records) {
 			String nutsCode = record.get("NUTS-Code");
@@ -145,8 +144,8 @@ public class NUTSModelMaker {
 		Model mappingsModel = ModelFactory.createDefaultModel();
 		mappingsModel.setNsPrefix("owl", OWL.getURI());
 
-		logger.debug("Reading French NUTS from " + Configuration.RAMON_NUTS_FILE_NAME);
-		Reader in = new FileReader(Configuration.RAMON_NUTS_FILE_NAME);
+		logger.debug("Reading French NUTS from " + Configuration.RAMON_NUTS_2013_FILE_NAME);
+		Reader in = new FileReader(Configuration.RAMON_NUTS_2013_FILE_NAME);
 		Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
 		for (CSVRecord record : records) {
 			int nutsLevel = Integer.parseInt(record.get("Level")) - 1; // NUTS level is actually 1 less than RAMON level...

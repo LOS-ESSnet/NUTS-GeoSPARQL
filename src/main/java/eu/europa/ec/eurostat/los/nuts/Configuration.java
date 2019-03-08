@@ -19,11 +19,15 @@ public class Configuration {
 	public final static String NUTS_VERSION = "2013";
 
 	// CSV file with NUTS borders in WKT, provided by IGN
-	public static String IGN_NUTS_FILE_NAME = "src/main/resources/data/nuts" + CURRENT_SCALE + "m2013wkt.csv";
+	public static String IGN_NUTS_FILE_NAME = "src/main/resources/data/nuts" + CURRENT_SCALE + "m" + NUTS_VERSION + "wkt.csv";
 	// Downloaded from http://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_CLS_DLD&StrNom=NUTS_2016&StrLanguageCode=EN&StrLayoutCode=HIERARCHIC#
-	public static String RAMON_NUTS_FILE_NAME = "src/main/resources/data/NUTS_2013_20180814_130754.csv";
+	public static String RAMON_NUTS_2013_FILE_NAME = "src/main/resources/data/NUTS_2013_20180814_130754.csv";
+	// Downloaded from https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_CLS_DLD&StrNom=NUTS_2016L&StrLanguageCode=EN&StrLayoutCode=HIERARCHIC#
+	public static String RAMON_NUTS_2016_FILE_NAME = "src/main/resources/data/NUTS_2016_20190308_200523.csv";
+	public static String RAMON_NUTS_FILE_NAME = NUTS_VERSION.equals("2013") ? RAMON_NUTS_2013_FILE_NAME : RAMON_NUTS_2016_FILE_NAME;
+
 	// Output file
-	public static final String NUTS_MODEL_FILE_NAME = "src/main/resources/data/nuts-" + CURRENT_SCALE + ".ttl";
+	public static final String NUTS_MODEL_FILE_NAME = "src/main/resources/data/nuts-" + NUTS_VERSION + "-" + CURRENT_SCALE + ".ttl";
 
 	public static Map<String, String> REGION_NAMES_MAPPINGS = new HashMap<String, String>();
 	static {
@@ -34,7 +38,8 @@ public class Configuration {
 	}
 
 	public static String nutsURI(String nutsCode) {
-		return "http://ec.europa.eu/nuts/" + nutsCode.toLowerCase();
+		// return "http://ec.europa.eu/nuts/" + nutsCode.toLowerCase();
+		return "http://ld.linked-open-statistics.org/data/conceptscheme/NutsRegion/" + nutsCode.toUpperCase(); // For Roma hackathon
 	}
 	public static String nutsGeometryURI(String nutsCode) {
 		return nutsURI(nutsCode) + "/geometry";
