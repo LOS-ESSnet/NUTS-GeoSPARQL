@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -22,6 +23,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
+import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.logging.log4j.LogManager;
@@ -35,11 +37,13 @@ import org.apache.logging.log4j.Logger;
 public class NUTSModelMaker {
 
 	public static final String GEOSPARQL_URI = "http://www.opengis.net/ont/geosparql#";
-	// Useful classes and property from the GeoSPARQL ontology
+	// Useful classes and properties from the GeoSPARQL ontology
 	static Resource feature = ResourceFactory.createResource(GEOSPARQL_URI + "Feature");
 	static Resource geometry = ResourceFactory.createResource(GEOSPARQL_URI + "Geometry");
 	static Property hasGeometry = ResourceFactory.createProperty(GEOSPARQL_URI + "hasGeometry");
 	static Property asWKT = ResourceFactory.createProperty(GEOSPARQL_URI + "asWKT");
+	// XKOS depth property
+	static Property depth = ResourceFactory.createProperty("http://rdf-vocabulary.ddialliance.org/xkos#depth");
 	static String wktDatatypeURI = GEOSPARQL_URI + "wktLiteral";
 
 	private static Logger logger = LogManager.getLogger(NUTSModelMaker.class);
@@ -72,13 +76,35 @@ public class NUTSModelMaker {
 		nutsModel.setNsPrefix("rdfs", RDFS.getURI());
 		nutsModel.setNsPrefix("geo", GEOSPARQL_URI);
 		nutsModel.setNsPrefix("dc", DC.getURI());
+		nutsModel.setNsPrefix("dcterms", DCTerms.getURI());
+		nutsModel.setNsPrefix("xkos", "http://rdf-vocabulary.ddialliance.org/xkos#");
 
 		// Read the RAMON file to get the official NUTS names
 		logger.info("Reading NUTS codes and labels from file " + Configuration.RAMON_NUTS_FILE_NAME);
-		SortedMap<String, String> nutsLabels = new TreeMap<String, String>();
+		// Store the RAMON codes for verification, as well as mappings between numeric and string codes
+		SortedMap<String, String> ramonCodes = new TreeMap<String, String>(); // Example: 9 -> BE213
+		// Store the mappings between numeric and string code so as to be able to construct hierarchy
+		SortedMap<String, String> hierarchyMappings = new TreeMap<String, String>(); // Example: BE213 -> 6
 		Reader in = new FileReader(Configuration.RAMON_NUTS_FILE_NAME);
 		Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
-		for (CSVRecord record : records) nutsLabels.put(record.get("NUTS-Code"), record.get("Description"));
+		for (CSVRecord record : records) {
+			String nutsCode = record.get("NUTS-Code");
+			ramonCodes.put(record.get("Code"), nutsCode);
+			String parentCode = record.get("Parent").trim();
+			if (parentCode.length() > 0) hierarchyMappings.put(nutsCode, parentCode);
+			Resource nutsResource = nutsModel.createResource(Configuration.nutsURI(nutsCode), feature);
+			nutsResource.addProperty(DC.identifier, nutsCode);
+		    nutsResource.addProperty(RDFS.label, nutsModel.createLiteral(record.get("Description"), "en")); // TODO It's actually not always English
+		    nutsResource.addProperty(depth, nutsModel.createTypedLiteral(Integer.parseInt(record.get("Level")) - 1)); // This is abusive: domain of 'depth' is xkos:ClassificationLevel
+		}
+		// Create hierarchies
+		for (String nutsCode : hierarchyMappings.keySet()) {
+			Resource nutsResource = nutsModel.createResource(Configuration.nutsURI(nutsCode));
+			String parentCode = ramonCodes.get(hierarchyMappings.get(nutsCode));
+			Resource parentResource = nutsModel.createResource(Configuration.nutsURI(parentCode));
+	    	parentResource.addProperty(DCTerms.hasPart, nutsResource);
+	    	nutsResource.addProperty(DCTerms.isPartOf, parentResource);
+	    	}
 
 		// Now read the IGN file to get the geographic data
 		logger.info("Reading input geographic data from file " + Configuration.IGN_NUTS_FILE_NAME);
@@ -86,15 +112,13 @@ public class NUTSModelMaker {
 		records = CSVFormat.TDF.withQuote(null).withHeader().parse(in);
 		for (CSVRecord record : records) {
 		    String nutsCode = record.get("nuts_id");
-		    if (!nutsLabels.containsKey(nutsCode)) {
+		    if (!ramonCodes.containsValue(nutsCode)) {
 		    	logger.warn("NUTS " + nutsCode + " not found in RAMON file");
 		    	continue;
 		    }
 		    Resource nutsResource = nutsModel.createResource(Configuration.nutsURI(nutsCode), feature);
-		    nutsResource.addProperty(DC.identifier, nutsCode);
-		    nutsResource.addProperty(RDFS.label,nutsModel.createLiteral(nutsLabels.get(nutsCode), "en")); // TODO It's actually not always English
 		    Resource nutsGeometryResource = nutsModel.createResource(Configuration.nutsGeometryURI(nutsCode), geometry);
-		    nutsGeometryResource.addProperty(RDFS.label,nutsModel.createLiteral("Geometry for NUTS " + nutsCode, "en"));
+		    nutsGeometryResource.addProperty(RDFS.label, nutsModel.createLiteral("Geometry for NUTS " + nutsCode, "en"));
 		    nutsResource.addProperty(hasGeometry, nutsGeometryResource);
 		    nutsGeometryResource.addProperty(asWKT, nutsModel.createTypedLiteral(record.get("wkt"), wktDatatypeURI));
 		}
