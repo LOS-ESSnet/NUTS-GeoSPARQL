@@ -29,8 +29,8 @@ public class NUTSChecker {
 		SortedMap<String, String> ramonNUTS = new TreeMap<String, String>();
 
 		// Read RAMON NUTS
-		logger.info("Reading RAMON NUTS from file " + Configuration.RAMON_NUTS_2013_FILE_NAME);
-		Reader in = new FileReader(Configuration.RAMON_NUTS_2013_FILE_NAME);
+		logger.info("Reading RAMON NUTS from file " + Configuration.RAMON_NUTS_FILE_NAME);
+		Reader in = new FileReader(Configuration.RAMON_NUTS_FILE_NAME);
 		Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
 		for (CSVRecord record : records) {
 			int nutsLevel = Integer.parseInt(record.get("Level")) - 1; // NUTS level is actually 1 less than RAMON level...

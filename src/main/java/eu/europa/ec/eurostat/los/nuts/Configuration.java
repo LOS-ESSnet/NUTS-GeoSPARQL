@@ -14,17 +14,16 @@ public class Configuration {
 
 	static String SPARQL_ENDPOINT = "http://rdf.insee.fr/sparql";
 	public final static String[] AVAILABLE_SCALES = {"01", "03", "10", "20", "60"};
+
 	public final static String CURRENT_SCALE = "01";
+	public final static String NUTS_VERSION = "2016";
 
-	public final static String NUTS_VERSION = "2013";
-
-	// CSV file with NUTS borders in WKT, provided by IGN
-	public static String IGN_NUTS_FILE_NAME = "src/main/resources/data/nuts" + CURRENT_SCALE + "m" + NUTS_VERSION + "wkt.csv";
-	// Downloaded from http://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_CLS_DLD&StrNom=NUTS_2016&StrLanguageCode=EN&StrLayoutCode=HIERARCHIC#
-	public static String RAMON_NUTS_2013_FILE_NAME = "src/main/resources/data/NUTS_2013_20180814_130754.csv";
-	// Downloaded from https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_CLS_DLD&StrNom=NUTS_2016L&StrLanguageCode=EN&StrLayoutCode=HIERARCHIC#
-	public static String RAMON_NUTS_2016_FILE_NAME = "src/main/resources/data/NUTS_2016_20190308_200523.csv";
-	public static String RAMON_NUTS_FILE_NAME = NUTS_VERSION.equals("2013") ? RAMON_NUTS_2013_FILE_NAME : RAMON_NUTS_2016_FILE_NAME;
+	// CSV file with NUTS borders in WKT, exported with QGIS from https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/nuts
+	public static String IGN_NUTS_FILE_NAME = "src/main/resources/data/NUTS_" + NUTS_VERSION + "_" + CURRENT_SCALE + "_WKT.csv";
+	
+	// Download 2013 from https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_CLS_DLD&StrNom=NUTS_2013&StrLanguageCode=EN&StrLayoutCode=HIERARCHIC#
+	// Download 2016 from https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_CLS_DLD&StrNom=NUTS_2016&StrLanguageCode=EN&StrLayoutCode=HIERARCHIC#
+	public static String RAMON_NUTS_FILE_NAME = "src/main/resources/data/NUTS_" + NUTS_VERSION + ".csv";
 
 	// Output file
 	public static final String NUTS_MODEL_FILE_NAME = "src/main/resources/data/nuts-" + NUTS_VERSION + "-" + CURRENT_SCALE + ".ttl";

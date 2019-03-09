@@ -84,7 +84,7 @@ public class NUTSModelMaker {
 		SortedMap<String, String> ramonCodes = new TreeMap<String, String>(); // Example: 9 -> BE213
 		// Store the mappings between numeric and string code so as to be able to construct hierarchy
 		SortedMap<String, String> hierarchyMappings = new TreeMap<String, String>(); // Example: BE213 -> 6
-		Reader in = new FileReader(Configuration.RAMON_NUTS_2013_FILE_NAME);
+		Reader in = new FileReader(Configuration.RAMON_NUTS_FILE_NAME);
 		Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
 		for (CSVRecord record : records) {
 			String nutsCode = record.get("NUTS-Code");
@@ -108,9 +108,9 @@ public class NUTSModelMaker {
 		// Now read the IGN file to get the geographic data
 		logger.info("Reading input geographic data from file " + Configuration.IGN_NUTS_FILE_NAME);
 		in = new FileReader(Configuration.IGN_NUTS_FILE_NAME);
-		records = CSVFormat.TDF.withQuote(null).withHeader().parse(in);
+		records = CSVFormat.TDF.withQuote(null).withHeader().parse(in); //TDF
 		for (CSVRecord record : records) {
-		    String nutsCode = record.get("nuts_id");
+		    String nutsCode = record.get("NUTS_ID");//nuts_id
 		    if (!ramonCodes.containsValue(nutsCode)) {
 		    	logger.warn("NUTS " + nutsCode + " not found in RAMON file");
 		    	continue;
@@ -119,7 +119,8 @@ public class NUTSModelMaker {
 		    Resource nutsGeometryResource = nutsModel.createResource(Configuration.nutsGeometryURI(nutsCode), geometry);
 		    nutsGeometryResource.addProperty(RDFS.label, nutsModel.createLiteral("Geometry for NUTS " + nutsCode, "en"));
 		    nutsResource.addProperty(hasGeometry, nutsGeometryResource);
-		    nutsGeometryResource.addProperty(asWKT, nutsModel.createTypedLiteral(record.get("wkt"), wktDatatypeURI));
+		    String multiPolygon = record.get("WKT").replaceAll("^\"|\"$", "");
+		    nutsGeometryResource.addProperty(asWKT, nutsModel.createTypedLiteral(multiPolygon, wktDatatypeURI)); //wkt
 		}
 		logger.debug("Input file consumed, returning Jena model");
 		return nutsModel;
@@ -144,8 +145,8 @@ public class NUTSModelMaker {
 		Model mappingsModel = ModelFactory.createDefaultModel();
 		mappingsModel.setNsPrefix("owl", OWL.getURI());
 
-		logger.debug("Reading French NUTS from " + Configuration.RAMON_NUTS_2013_FILE_NAME);
-		Reader in = new FileReader(Configuration.RAMON_NUTS_2013_FILE_NAME);
+		logger.debug("Reading French NUTS from " + Configuration.RAMON_NUTS_FILE_NAME);
+		Reader in = new FileReader(Configuration.RAMON_NUTS_FILE_NAME);
 		Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
 		for (CSVRecord record : records) {
 			int nutsLevel = Integer.parseInt(record.get("Level")) - 1; // NUTS level is actually 1 less than RAMON level...
